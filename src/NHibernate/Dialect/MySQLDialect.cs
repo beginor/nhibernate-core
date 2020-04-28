@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Text;
 using NHibernate.Dialect.Function;
 using NHibernate.Dialect.Schema;
+using NHibernate.Engine;
 using NHibernate.SqlCommand;
 using NHibernate.SqlTypes;
+using NHibernate.Type;
 using NHibernate.Util;
 using Environment=NHibernate.Cfg.Environment;
 
@@ -242,7 +246,8 @@ namespace NHibernate.Dialect
 
 		protected virtual void RegisterFunctions()
 		{
-			RegisterFunction("iif", new StandardSQLFunction("if"));
+			RegisterFunction("iif", new IfSQLFunction());
+			RegisterFunction("mod", new ModulusFunction(true, true));
 
 			RegisterFunction("sign", new StandardSQLFunction("sign", NHibernateUtil.Int32));
 			
@@ -265,7 +270,8 @@ namespace NHibernate.Dialect
 			RegisterFunction("truncate", new StandardSQLFunctionWithRequiredParameters("truncate", new object[] {null, "0"}));
 
 			RegisterFunction("rand", new NoArgSQLFunction("rand", NHibernateUtil.Double));
-			
+			RegisterFunction("random", new NoArgSQLFunction("rand", NHibernateUtil.Double));
+
 			RegisterFunction("power", new StandardSQLFunction("power", NHibernateUtil.Double));
 			
 			RegisterFunction("stddev", new StandardSQLFunction("stddev", NHibernateUtil.Double));
@@ -294,7 +300,7 @@ namespace NHibernate.Dialect
 			RegisterFunction("hex", new StandardSQLFunction("hex", NHibernateUtil.String));
 			RegisterFunction("soundex", new StandardSQLFunction("soundex", NHibernateUtil.String));
 
-			RegisterFunction("current_date", new NoArgSQLFunction("current_date", NHibernateUtil.Date, false));
+			RegisterFunction("current_date", new NoArgSQLFunction("current_date", NHibernateUtil.LocalDate, false));
 			RegisterFunction("current_time", new NoArgSQLFunction("current_time", NHibernateUtil.Time, false));
 
 			RegisterFunction("second", new StandardSQLFunction("second", NHibernateUtil.Int32));
@@ -548,5 +554,30 @@ namespace NHibernate.Dialect
 		public override bool SupportsDistributedTransactions => false;
 
 		#endregion
+
+		[Serializable]
+		internal class IfSQLFunction : StandardSQLFunction
+		{
+			public IfSQLFunction() : base("if")
+			{
+			}
+
+			/// <inheritdoc />
+			public override IType GetReturnType(IEnumerable<IType> argumentTypes, IMapping mapping, bool throwOnError)
+			{
+				var args = argumentTypes.ToList();
+				if (args.Count != 3)
+				{
+					if (throwOnError)
+					{
+						throw new QueryException($"Invalid number of arguments for iif()");
+					}
+
+					return null;
+				}
+
+				return args[1] ?? args[2];
+			}
+		}
 	}
 }

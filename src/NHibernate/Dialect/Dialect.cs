@@ -55,6 +55,7 @@ namespace NHibernate.Dialect
 		static Dialect()
 		{
 			StandardAggregateFunctions["count"] = new CountQueryFunctionInfo();
+			StandardAggregateFunctions["count_big"] = new CountQueryFunctionInfo();
 			StandardAggregateFunctions["avg"] = new AvgQueryFunctionInfo();
 			StandardAggregateFunctions["max"] = new ClassicAggregateFunction("max", false);
 			StandardAggregateFunctions["min"] = new ClassicAggregateFunction("min", false);
@@ -93,7 +94,7 @@ namespace NHibernate.Dialect
 			RegisterFunction("coalesce", new StandardSQLFunction("coalesce"));
 			RegisterFunction("nullif", new StandardSQLFunction("nullif"));
 			RegisterFunction("abs", new StandardSQLFunction("abs"));
-			RegisterFunction("mod", new StandardSQLFunction("mod", NHibernateUtil.Int32));
+			RegisterFunction("mod", new ModulusFunction(false, false));
 			RegisterFunction("sqrt", new StandardSQLFunction("sqrt", NHibernateUtil.Double));
 			RegisterFunction("upper", new StandardSQLFunction("upper"));
 			RegisterFunction("lower", new StandardSQLFunction("lower"));
@@ -105,7 +106,7 @@ namespace NHibernate.Dialect
 			// the syntax of current_timestamp is extracted from H3.2 tests 
 			// - test\hql\ASTParserLoadingTest.java
 			// - test\org\hibernate\test\hql\HQLTest.java
-			RegisterFunction("current_timestamp", new NoArgSQLFunction("current_timestamp", NHibernateUtil.DateTime, true));
+			RegisterFunction("current_timestamp", new NoArgSQLFunction("current_timestamp", NHibernateUtil.LocalDateTime, true));
 			RegisterFunction("sysdate", new NoArgSQLFunction("sysdate", NHibernateUtil.DateTime, false));
 
 			//map second/minute/hour/day/month/year to ANSI extract(), override on subclasses
@@ -1336,6 +1337,11 @@ namespace NHibernate.Dialect
 		{
 			return new ANSIJoinFragment();
 		}
+
+		/// <summary>
+		/// Does this dialect support CROSS JOIN?
+		/// </summary>
+		public virtual bool SupportsCrossJoin => true;
 
 		/// <summary> 
 		/// Create a <see cref="CaseFragment"/> strategy responsible

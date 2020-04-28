@@ -27,7 +27,6 @@ using NHibernate.Event;
 using NHibernate.Exceptions;
 using NHibernate.Hql.Util;
 using NHibernate.Impl;
-using NHibernate.Intercept;
 using NHibernate.Param;
 using NHibernate.Persister.Collection;
 using NHibernate.Persister.Entity;
@@ -428,7 +427,7 @@ namespace NHibernate.Loader
 			{
 				//this is a query and we are loading multiple instances of the same collection role
 				return session.PersistenceContext.LoadContexts.GetCollectionLoadContext(reader).EndLoadingCollectionsAsync(
-				collectionPersister, !IsCollectionPersisterCacheable(collectionPersister), cacheBatcher, cancellationToken);
+					collectionPersister, !IsCollectionPersisterCacheable(collectionPersister), cacheBatcher, cancellationToken);
 			}
 			catch (Exception ex)
 			{
